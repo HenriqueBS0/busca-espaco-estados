@@ -3,6 +3,9 @@ const Estado = require("./Estado");
 class GeradorEstados {
     funcoes;
     
+    /**
+     * @param {Array<function(Estado): Estado>} funcoes 
+     */
     constructor(funcoes) {
         this.funcoes = funcoes;
     }
@@ -12,7 +15,7 @@ class GeradorEstados {
      * @returns {Array<Estado>}
      */
     gerar(estado) {
-        return this.funcoes.map(funcao => funcao(estado));
+        return this.funcoes.map(funcao => funcao(estado)).filter(estadoGerado => !estado.isIgual(estadoGerado));
     }
 }
 

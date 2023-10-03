@@ -1,4 +1,5 @@
-const Estado = require('./Estado'); 
+const Arvore = require('./Arvore');
+const Estado = require('./Estado');
 const GeradorEstados = require('./GeradorEstados');
 const Nodo = require('./Nodo');
 const ResultadoBusca = require('./ResultadoBusca')
@@ -8,57 +9,90 @@ class BuscaAEstrela {
      * @param {Estado} estadoInicial 
      * @param {Estado} estadoFinal 
      * @param {GeradorEstados} geradorEstados
+     * @param {function(Estado, Estado): Number} calculoValorHeuristico 
      * @returns {ResultadoBusca} 
      */
     static getResultado(estadoInicial, estadoFinal, geradorEstados, calculoValorHeuristico) {
         const tempoInicial = Date.now();
 
-        const nodoRaiz = new Nodo(estadoInicial.setValorHeuristico(calculoValorHeuristico(estadoInicial, estadoFinal)));
+        const arvore = new Arvore(estadoInicial);
 
-        let nodoAtual = nodoRaiz;
+        arvore.getRaiz()
+            .getEstado()
+            .setValorHeuristico(calculoValorHeuristico(arvore.getRaiz().getEstado(), estadoFinal));
 
-        const abertos = [nodoRaiz];
+        /**
+         * @type {Array<Nodo>}
+         */
+        const abertos = [arvore.getRaiz()];
+
+        /**
+         * @type {Array<Nodo>}
+         */
         const fechados = [];
 
-        while(abertos.length !== 0) {
-            nodoAtual = abertos.shift();
+        do {
+            const nodo = abertos.shift();
 
-            if(nodoAtual.getValor().isIgual(estadoFinal)) {
-                break;
+            if (nodo.getEstado().isIgual(estadoFinal)) {
+                return new ResultadoBusca(arvore, Date.now() - tempoInicial);
             }
 
-            const filhos = geradorEstados.gerar(nodoAtual.getValor()).map(estado => new Nodo(estado, nodoAtual));
+            const sucessores = geradorEstados.gerar(nodo.getEstado()).map(estado => arvore.add(nodo, estado));
 
-            nodoAtual.setFilhos(filhos);
+            for (const sucessor of sucessores) {
+                const nodoEmAbertos = this.getNodoInArray(nodo, abertos);
+                const nodoEmFechados = this.getNodoInArray(nodo, fechados);
+    
+                if(nodoEmAbertos === null && nodoEmFechados === null) {
+                    const estado = sucessor.getEstado();
+                    const valorHeuristico = calculoValorHeuristico(estado, estadoFinal); 
+                    sucessor.getEstado().setValorHeuristico(valorHeuristico);
+                    abertos.push(sucessor);
 
-            for (const filho of filhos) {
-                const indiceFilhoEmAbertos = abertos.findIndex(nodo => nodo.getValor().isIgual(filho.getValor()));
-                const indiceFilhoEmFechados = fechados.findIndex(nodo => nodo.getValor().isIgual(filho.getValor()));
-
-                if(indiceFilhoEmAbertos === -1 && indiceFilhoEmFechados === -1) {
-                    filho.getValor().setValorHeuristico(calculoValorHeuristico(filho.getValor(), estadoFinal));
-                    abertos.push(filho);
+                    continue;
                 }
-                else if(indiceFilhoEmAbertos !== -1) {
-                    if(filho.getNivel() < abertos[indiceFilhoEmAbertos].getNivel()) {
-                        abertos[indiceFilhoEmAbertos] = filho;
+
+                if(nodoEmAbertos !== null) {
+                    if(sucessor.getNivel() < nodoEmAbertos.nodo.getNivel()) {
+                        abertos[nodoEmAbertos.indice] = sucessor;
                     }
+
+                    continue;
                 }
-                else if(indiceFilhoEmFechados !== -1) {
-                    if(filho.getNivel() < fechados[indiceFilhoEmFechados].getNivel()) {
-                        fechados.splice(indiceFilhoEmFechados, 1);
-                        abertos.push(filho);
+
+                if(nodoEmFechados !== null) {
+                    if(sucessor.getNivel() < nodoEmFechados.nodo.getNivel()) {
+                        fechados.splice(nodoEmFechados.indice, 1);
+                        abertos.push(sucessor);
                     }
                 }
             }
 
-            fechados.push(nodoAtual);
-            abertos.sort((a, b) => a.getValor().getValorHeuristico() - b.getValor().getValorHeuristico());
+            fechados.push(nodo);
+            abertos.sort((a, b) => a.getEstado().getValorHeuristico() - b.getEstado().getValorHeuristico());
+        } while (true);
+    }
+
+    /**
+     * @param {Nodo} nodo 
+     * @param {Array<Nodo>} array
+     * @returns {null|NodoArray}
+     * 
+     * @typedef {Object} NodoArray
+     * @property {Nodo} nodo
+     * @property {Number} indice 
+     */
+    static getNodoInArray(nodo, array) {
+        for (let indice = 0; indice < array.length; indice++) {
+            const nodoArray = array[indice];
+
+            if (nodo.getEstado().isIgual(nodoArray.getEstado())) {
+                return { nodo: nodoArray, indice: indice }
+            }
         }
-        
-        const tempoFinal = Date.now() - tempoInicial;
 
-        return new ResultadoBusca(nodoAtual, nodoRaiz, tempoFinal);
+        return null;
     }
 }
 

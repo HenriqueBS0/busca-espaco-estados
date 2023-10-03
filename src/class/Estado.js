@@ -1,5 +1,5 @@
 class Estado {
-
+    
     valorHeuristico = null;
 
     setValorHeuristico(valor) {
@@ -14,7 +14,7 @@ class Estado {
     /**
      * 
      * @param {Estado} estado
-     * @returns bool
+     * @returns {boolean}
      */
     isIgual(estado) {
         return true;

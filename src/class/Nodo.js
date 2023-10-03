@@ -1,39 +1,63 @@
+const Estado = require('./Estado');
+
 class Nodo {
-    pai;
-    valor;
-    filhos;
 
     /**
-     * 
-     * @param {*} valor 
-     * @param {Nodo|null} pai 
+     * @type {Estado}
      */
-    constructor(valor, pai = null) {
-        this.valor = valor;
+    estado;
+
+    /**
+     * @type {Nodo|null}
+     */
+    pai;
+
+    /**
+     * @type {Array<Nodo>}
+     */
+    filhos = [];
+
+    /**
+     * @param {Estado} estado
+     * @param {Nodo|null} [pai=null]  
+     */
+    constructor(estado, pai = null) {
+        this.estado = estado
         this.pai = pai;
-        this.filhos = [];
     }
 
-    getValor() {
-        return this.valor;
+    /**
+     * @returns {Estado}
+     */
+    getEstado() {
+        return this.estado;
     }
 
-    addFilho(valor) {
-        this.filhos.push(new Nodo(valor, this));
+    /**
+     * @returns {Nodo|null}
+     */
+    getPai() {
+        return this.pai;
+    }
+
+    /**
+     * @param {Nodo} filho 
+     * @returns {Nodo}
+     */
+    addFilho(filho) {
+        this.filhos.push(filho);
         return this;
     }
 
-    setFilhos(filhos) {
-        this.filhos = filhos;
-        return this;
-    }
-
+    /**
+     * @returns {Array<Nodo>} 
+     */
     getFilhos() {
         return this.filhos;
     }
 
     getNivel() {
-        return this.pai ? this.pai.getNivel() + 1 : 0;
+        return this.getPai() !== null ? this.getPai().getNivel() + 1 : 0;
     }
 }
 

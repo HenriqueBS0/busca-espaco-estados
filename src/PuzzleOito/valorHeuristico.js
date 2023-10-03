@@ -55,5 +55,9 @@ const distanciaManhattan = function (estado, estadoFinal) {
     return total;
 }
 
-module.exports = { numeroPecasForaLugar, distanciaManhattan }
+const numeroPecasForaLugarEDistanciaManhattan = (estadoInicial, estadoFinal) => {
+    return numeroPecasForaLugar(estadoInicial, estadoFinal) + distanciaManhattan(estadoInicial, estadoFinal);
+}
+
+module.exports = { numeroPecasForaLugar, distanciaManhattan, numeroPecasForaLugarEDistanciaManhattan }
 

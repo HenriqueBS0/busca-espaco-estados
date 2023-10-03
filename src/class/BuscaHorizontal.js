@@ -1,3 +1,4 @@
+const Arvore = require('./Arvore');
 const Estado = require('./Estado');
 const GeradorEstados = require('./GeradorEstados');
 const Nodo = require('./Nodo');
@@ -11,33 +12,40 @@ class BuscaHorizontal {
      * @returns {ResultadoBusca} 
      */
     static getResultado(estadoInicial, estadoFinal, geradorEstados) {
+        const arvore = new Arvore(estadoInicial);
+        
         const tempoInicial = Date.now();
 
-        let nodoAtual = new Nodo(estadoInicial);
-
-        const nodoRaiz = nodoAtual;
-
-        const abertos = [];
+        /**
+         * @type {Array<Nodo>}
+         */
+        const abertos = [arvore.getRaiz()];
+        
+        /**
+         * @type {Array<Nodo>}
+         */
         const fechados = [];
 
-        while (!nodoAtual.getValor().isIgual(estadoFinal)) {
+        while(!abertos[0].getEstado().isIgual(estadoFinal)) {
+            const nodo = abertos.shift();
+            const sucessores = geradorEstados.gerar(nodo.getEstado());
+            
+            fechados.push(nodo);
 
-            const sucessores = geradorEstados.gerar(nodoAtual.getValor())
-                .map(estado => new Nodo(estado, nodoAtual))
-                .filter(nodoGerado => !fechados.some(nodo => nodoGerado.getValor().isIgual(nodo.getValor())) && !abertos.some(nodo => nodoGerado.getValor().isIgual(nodo.getValor())));
+            sucessores.forEach(estado => {
+                const isNovoNodo = arvore.getNodos(estado).length === 0;
 
-            nodoAtual.setFilhos(sucessores);
-
-            fechados.push(nodoAtual);
-
-            sucessores.forEach(sucessor => abertos.push(sucessor));
-
-            nodoAtual = abertos.shift();
+                if(isNovoNodo) {
+                    abertos.push(arvore.add(nodo, estado));
+                }
+                else {
+                    arvore.add(nodo, estado);
+                }
+            });
         }
 
-        const tempoFinal = Date.now() - tempoInicial;
 
-        return new ResultadoBusca(nodoAtual, nodoRaiz, tempoFinal);
+        return new ResultadoBusca(arvore, Date.now() - tempoInicial);
     }
 }
 
